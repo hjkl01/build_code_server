@@ -101,8 +101,8 @@ RUN set -eux; \
 		ln -svT "$src" "/usr/local/bin/$dst"; \
 	done
 
-RUN curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-  python get-pip.py
+COPY get-pip.py get-pip.py
+RUN python get-pip.py
 
 RUN pip install black neovim
 # CMD ["python3"]
