@@ -1,7 +1,10 @@
-# syntax=docker/dockerfile:1
+#
+# NOTE: THIS DOCKERFILE IS GENERATED VIA "apply-templates.sh"
+#
+# PLEASE DO NOT EDIT IT DIRECTLY.
+#
 
-FROM ghcr.io/linuxserver/baseimage-ubuntu:noble
-
+FROM buildpack-deps:bookworm
 
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
@@ -18,16 +21,11 @@ RUN set -eux; \
 		libbluetooth-dev \
 		tk-dev \
 		uuid-dev \
-    neovim \
-    wget \
-    gcc \
-    git \
-    make \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEY E3FF2839C048B25C084DEBE9B26995E310250568
-ENV PYTHON_VERSION 3.9.2
+ENV PYTHON_VERSION 3.9.19
 
 RUN set -eux; \
 	\
@@ -101,8 +99,34 @@ RUN set -eux; \
 		ln -svT "$src" "/usr/local/bin/$dst"; \
 	done
 
-COPY get-pip.py get-pip.py
-RUN python get-pip.py
+# if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
+ENV PYTHON_PIP_VERSION 23.0.1
+# https://github.com/docker-library/python/issues/365
+ENV PYTHON_SETUPTOOLS_VERSION 58.1.0
+# https://github.com/pypa/get-pip
+ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/def4aec84b261b939137dd1c69eff0aabb4a7bf4/public/get-pip.py
+ENV PYTHON_GET_PIP_SHA256 bc37786ec99618416cc0a0ca32833da447f4d91ab51d2c138dd15b7af21e8e9a
+
+RUN set -eux; \
+	\
+	wget -O get-pip.py "$PYTHON_GET_PIP_URL"; \
+	echo "$PYTHON_GET_PIP_SHA256 *get-pip.py" | sha256sum -c -; \
+	\
+	export PYTHONDONTWRITEBYTECODE=1; \
+	\
+	python get-pip.py \
+		--disable-pip-version-check \
+		--no-cache-dir \
+		--no-compile \
+		"pip==$PYTHON_PIP_VERSION" \
+		"setuptools==$PYTHON_SETUPTOOLS_VERSION" \
+		# get-pip.py installs wheel by default, adding in case get-pip defaults change
+		wheel \
+	; \
+	rm -f get-pip.py; \
+	\
+	pip --version
+
 
 RUN pip install black neovim
 # CMD ["python3"]
