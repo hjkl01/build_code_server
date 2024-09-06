@@ -3,10 +3,6 @@ FROM python:3.9.19-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         sudo \
-				neovim \
-        lua5.4 \
-        zsh \
-        tmux \
 				wget \
         libatomic1 \
     && rm -rf /var/lib/apt/lists/* \
@@ -14,9 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /tmp/* \
     && rm -rf /var/tmp/*
 
-RUN git clone  --depth=1 https://github.com/hjkl01/dotfiles ~/.dotfiles/ \
-    && cp ~/.dotfiles/env ~/.dotfiles/.env \
-    && cd ~/.dotfiles && bash ./installer.sh
+RUN pip install -U pip && \
+    pip install pylint black
 
 WORKDIR /home/
 
