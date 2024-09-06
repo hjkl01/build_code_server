@@ -18,15 +18,26 @@ RUN git clone  --depth=1 https://github.com/hjkl01/dotfiles ~/.dotfiles/ \
     && cp ~/.dotfiles/env ~/.dotfiles/.env \
     && cd ~/.dotfiles && sh ./installer.sh
 
-WORKDIR /home/workspace
+WORKDIR /home/
 
 ARG RELEASE_TAG="openvscode-server-v1.92.1"
 ARG RELEASE_ORG="gitpod-io"
-ARG OPENVSCODE_SERVER_ROOT="/home/workspace/.openvscode-server"
+ARG OPENVSCODE_SERVER_ROOT="/home/.openvscode-server"
 
 # Downloading the latest VSC Server release and extracting the release archive
 # Rename `openvscode-server` cli tool to `code` for convenience
-RUN arch="x64"; \
+RUN if [ -z "${RELEASE_TAG}" ]; then \
+        echo "The RELEASE_TAG build arg must be set." >&2 && \
+        exit 1; \
+    fi && \
+    arch=$(uname -m) && \
+    if [ "${arch}" = "x86_64" ]; then \
+        arch="x64"; \
+    elif [ "${arch}" = "aarch64" ]; then \
+        arch="arm64"; \
+    elif [ "${arch}" = "armv7l" ]; then \
+        arch="armhf"; \
+    fi && \
     wget https://github.com/${RELEASE_ORG}/openvscode-server/releases/download/${RELEASE_TAG}/${RELEASE_TAG}-linux-${arch}.tar.gz && \
     tar -xzf ${RELEASE_TAG}-linux-${arch}.tar.gz && \
     mv -f ${RELEASE_TAG}-linux-${arch} ${OPENVSCODE_SERVER_ROOT} && \
