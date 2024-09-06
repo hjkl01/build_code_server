@@ -10,9 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 				wget \
         libatomic1 \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    && rm -rf /tmp/* \
-    && rm -rf /var/tmp/*
+    && apt-get clean
 
 RUN git clone  --depth=1 https://github.com/hjkl01/dotfiles ~/.dotfiles/ \
     && rm ~/.zshrc \
