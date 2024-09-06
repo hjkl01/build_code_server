@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/tmp/*
 
 RUN git clone  --depth=1 https://github.com/hjkl01/dotfiles ~/.dotfiles/ \
-    && rm ~/.zshrc \
     && cp ~/.dotfiles/env ~/.dotfiles/.env \
     && cd ~/.dotfiles && sh ./installer.sh
 
