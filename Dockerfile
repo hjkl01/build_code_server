@@ -1,21 +1,25 @@
 FROM python:3.9.19-bookworm
 
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         sudo \
-				wget \
+	      wget \
         libatomic1 \
         gcc \
+        build-essential \
+        libldap2-dev libsasl2-dev slapd ldap-utils tox \
+        lcov valgrind \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* \
     && rm -rf /var/tmp/*
 
-COPY ./requirements.txt /root/requirements.txt
-COPY ./odoo_requirements.txt /root/odoo_requirements.txt
-
 RUN pip install -U pip && \
     pip install pylint black
+
+COPY ./requirements.txt /root/requirements.txt
+COPY ./odoo_requirements.txt /root/odoo_requirements.txt
 
 RUN pip install -r /root/requirements.txt
 RUN pip install -r /root/odoo_requirements.txt
