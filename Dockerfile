@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         sudo \
 				wget \
         libatomic1 \
+        gcc \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* \
