@@ -14,9 +14,10 @@ COPY ./requirements.txt /root/requirements.txt
 COPY ./odoo_requirements.txt /root/odoo_requirements.txt
 
 RUN pip install -U pip && \
-    pip install pylint black && \
-    pip install -r /root/requirements.txt && \
-    pip install -r /root/odoo_requirements.txt
+    pip install pylint black
+
+RUN pip install -r /root/requirements.txt
+RUN pip install -r /root/odoo_requirements.txt
 
 WORKDIR /home/
 
