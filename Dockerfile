@@ -24,60 +24,50 @@ COPY ./odoo_requirements.txt /root/odoo_requirements.txt
 RUN pip install -r /root/requirements.txt
 RUN pip install -r /root/odoo_requirements.txt
 
-WORKDIR /home/
 
-ARG RELEASE_TAG="openvscode-server-v1.92.1"
-ARG RELEASE_ORG="gitpod-io"
-ARG OPENVSCODE_SERVER_ROOT="/home/.openvscode-server"
+# set version label
+ARG BUILD_DATE="20240913"
+ARG VERSION="20240913"
+ARG CODE_RELEASE="openvscode-server-v1.93.0"
+LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="aptalca"
 
-# Downloading the latest VSC Server release and extracting the release archive
-# Rename `openvscode-server` cli tool to `code` for convenience
-RUN if [ -z "${RELEASE_TAG}" ]; then \
-        echo "The RELEASE_TAG build arg must be set." >&2 && \
-        exit 1; \
-    fi && \
-    arch=$(uname -m) && \
-    if [ "${arch}" = "x86_64" ]; then \
-        arch="x64"; \
-    elif [ "${arch}" = "aarch64" ]; then \
-        arch="arm64"; \
-    elif [ "${arch}" = "armv7l" ]; then \
-        arch="armhf"; \
-    fi && \
-    wget https://github.com/${RELEASE_ORG}/openvscode-server/releases/download/${RELEASE_TAG}/${RELEASE_TAG}-linux-${arch}.tar.gz && \
-    tar -xzf ${RELEASE_TAG}-linux-${arch}.tar.gz && \
-    mv -f ${RELEASE_TAG}-linux-${arch} ${OPENVSCODE_SERVER_ROOT} && \
-    cp ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/code && \
-    rm -f ${RELEASE_TAG}-linux-${arch}.tar.gz
+# environment settings
+ARG DEBIAN_FRONTEND="noninteractive"
+ENV HOME="/config"
 
-ARG USERNAME=openvscode-server
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+RUN \
+  echo "**** install runtime dependencies ****" && \
+  apt-get update && \
+  apt-get install -y \
+    git \
+    libatomic1 \
+    nano \
+    net-tools \
+    sudo && \
+  echo "**** install openvscode-server ****" && \
+  if [ -z ${CODE_RELEASE+x} ]; then \
+    CODE_RELEASE=$(curl -sX GET "https://api.github.com/repos/gitpod-io/openvscode-server/releases/latest" \
+      | awk '/tag_name/{print $4;exit}' FS='[""]' \
+      | sed 's|^openvscode-server-v||'); \
+  fi && \
+  mkdir -p /app/openvscode-server && \
+  curl -o \
+    /tmp/openvscode-server.tar.gz -L \
+    "https://github.com/gitpod-io/openvscode-server/releases/download/openvscode-server-v${CODE_RELEASE}/openvscode-server-v${CODE_RELEASE}-linux-x64.tar.gz" && \
+  tar xf \
+    /tmp/openvscode-server.tar.gz -C \
+    /app/openvscode-server/ --strip-components=1 && \
+  printf "Linuxserver.io version: ${VERSION}\nBuild-date: ${BUILD_DATE}" > /build_version && \
+  echo "**** clean up ****" && \
+  apt-get clean && \
+  rm -rf \
+    /tmp/* \
+    /var/lib/apt/lists/* \
+    /var/tmp/*
 
-# Creating the user and usergroup
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
+# add local files
+COPY /root /
 
-RUN chmod g+rw /home && \
-    mkdir -p /home/workspace && \
-    chown -R $USERNAME:$USERNAME /home/workspace && \
-    chown -R $USERNAME:$USERNAME ${OPENVSCODE_SERVER_ROOT}
-
-USER $USERNAME
-
-WORKDIR /home/workspace/
-
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    HOME=/home/workspace \
-    EDITOR=code \
-    VISUAL=code \
-    GIT_EDITOR="code --wait" \
-    OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
-
-# Default exposed port if none is specified
+# ports and volumes
 EXPOSE 3000
-
-ENTRYPOINT [ "/bin/sh", "-c", "exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server --host 0.0.0.0 --without-connection-token \"${@}\"", "--" ]
