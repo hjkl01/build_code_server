@@ -28,7 +28,7 @@ RUN pip install -r /root/odoo_requirements.txt
 # set version label
 ARG BUILD_DATE="20240913"
 ARG VERSION="20240913"
-ARG CODE_RELEASE="openvscode-server-v1.93.0"
+ARG CODE_RELEASE="1.93.0"
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 
