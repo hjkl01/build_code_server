@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         libldap2-dev libsasl2-dev slapd ldap-utils tox \
         lcov valgrind \
+        neovim \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* \
@@ -25,7 +26,7 @@ RUN pip install -r /root/odoo_requirements.txt
 
 WORKDIR /home/
 
-ARG RELEASE_TAG="openvscode-server-v1.93.0"
+ARG RELEASE_TAG="openvscode-server-v1.94.2"
 ARG RELEASE_ORG="gitpod-io"
 ARG OPENVSCODE_SERVER_ROOT="/home/.openvscode-server"
 
@@ -49,7 +50,7 @@ RUN if [ -z "${RELEASE_TAG}" ]; then \
     cp ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/code && \
     rm -f ${RELEASE_TAG}-linux-${arch}.tar.gz
 
-ARG USERNAME=developer
+ARG USERNAME=openvscode-server
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
