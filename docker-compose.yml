@@ -1,0 +1,13 @@
+services:
+    openvscode-server:
+        image: formattedd/code-server
+        volumes:
+            - './data/openvscode:/home/workspace:cached'
+            # - ../projects:/projects
+        ports:
+            - '3000:3000'
+        init: true
+        tty: true
+        stdin_open: true
+        restart: unless-stopped
+
