@@ -24,7 +24,8 @@ RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64
     rm /tmp/nvim-linux64.tar.gz
 RUN ln -s /opt/nvim-linux64/bin/nvim  /usr/local/bin/nvim && \
     ln -s /opt/nvim-linux64/bin/nvim  /usr/local/bin/vim && \
-    ln -s /opt/nvim-linux64/bin/nvim  /usr/local/bin/vi
+    ln -s /opt/nvim-linux64/bin/nvim  /usr/local/bin/vi && \
+    nvim --headless "+Lazy! sync" +qa
 
 RUN pip install --no-cache-dir -U pip && \
     pip install --no-cache-dir pylint black
