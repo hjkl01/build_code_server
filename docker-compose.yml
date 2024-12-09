@@ -1,6 +1,6 @@
 services:
   openvscode-server:
-    image: formattedd/code-server
+    image: formattedd/openvscode-server:1.92.1
     environment:
       - PUID=0
       - PGID=0
