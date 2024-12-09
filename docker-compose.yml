@@ -1,16 +1,20 @@
 services:
   openvscode-server:
-    image: formattedd/openvscode-server:1.92.1
+    image: formattedd/code-server:1.95.3
+    container_name: code-server
     environment:
-      - PUID=0
-      - PGID=0
-      - UMASK=022
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+      # - PASSWORD=password #optional
+      # - HASHED_PASSWORD= #optional
+      # - SUDO_PASSWORD=password #optional
+      # - SUDO_PASSWORD_HASH= #optional
+      # - PROXY_DOMAIN=code-server.my.domain #optional
+      - DEFAULT_WORKSPACE=/config/workspace #optional
     volumes:
-      - "./data/openvscode:/home/coder:cached"
-      # - ../projects:/projects
+      - ./data/code-server/config:/config
+    #   # - ../projects:/projects
     ports:
-      - "3000:3000"
-    init: true
-    tty: true
-    stdin_open: true
+      - 3000:8443
     restart: unless-stopped

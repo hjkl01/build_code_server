@@ -35,60 +35,48 @@ COPY ./odoo_requirements.txt /root/odoo_requirements.txt
 RUN pip install --no-cache-dir -r /root/requirements.txt
 RUN pip install --no-cache-dir -r /root/odoo_requirements.txt
 
-WORKDIR /home/
+# set version label
+ARG BUILD_DATE='241209'
+ARG VERSION='4.95.3'
+ARG CODE_RELEASE='4.95.3'
+LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="aptalca"
 
-ARG RELEASE_TAG="openvscode-server-v1.95.2"
-ARG RELEASE_ORG="gitpod-io"
-ARG OPENVSCODE_SERVER_ROOT="/home/coder"
+# environment settings
+ARG DEBIAN_FRONTEND="noninteractive"
+ENV HOME="/config"
 
-# Downloading the latest VSC Server release and extracting the release archive
-# Rename `openvscode-server` cli tool to `code` for convenience
-RUN if [ -z "${RELEASE_TAG}" ]; then \
-        echo "The RELEASE_TAG build arg must be set." >&2 && \
-        exit 1; \
-    fi && \
-    arch=$(uname -m) && \
-    if [ "${arch}" = "x86_64" ]; then \
-        arch="x64"; \
-    elif [ "${arch}" = "aarch64" ]; then \
-        arch="arm64"; \
-    elif [ "${arch}" = "armv7l" ]; then \
-        arch="armhf"; \
-    fi && \
-    wget https://github.com/${RELEASE_ORG}/openvscode-server/releases/download/${RELEASE_TAG}/${RELEASE_TAG}-linux-${arch}.tar.gz && \
-    tar -xzf ${RELEASE_TAG}-linux-${arch}.tar.gz && \
-    mv -f ${RELEASE_TAG}-linux-${arch} ${OPENVSCODE_SERVER_ROOT} && \
-    cp ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/code && \
-    rm -f ${RELEASE_TAG}-linux-${arch}.tar.gz
+RUN \
+  echo "**** install runtime dependencies ****" && \
+  apt-get update && \
+  apt-get install -y \
+    git \
+    libatomic1 \
+    nano \
+    net-tools \
+    sudo && \
+  echo "**** install code-server ****" && \
+  if [ -z ${CODE_RELEASE+x} ]; then \
+    CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
+      | awk '/tag_name/{print $4;exit}' FS='[""]' | sed 's|^v||'); \
+  fi && \
+  mkdir -p /app/code-server && \
+  curl -o \
+    /tmp/code-server.tar.gz -L \
+    "https://github.com/coder/code-server/releases/download/v${CODE_RELEASE}/code-server-${CODE_RELEASE}-linux-amd64.tar.gz" && \
+  tar xf /tmp/code-server.tar.gz -C \
+    /app/code-server --strip-components=1 && \
+  printf "Linuxserver.io version: ${VERSION}\nBuild-date: ${BUILD_DATE}" > /build_version && \
+  echo "**** clean up ****" && \
+  apt-get clean && \
+  rm -rf \
+    /config/* \
+    /tmp/* \
+    /var/lib/apt/lists/* \
+    /var/tmp/*
 
-ARG USERNAME=coder
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+# add local files
+COPY /root /
 
-# Creating the user and usergroup
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
-
-RUN chmod g+rw /home && \
-    mkdir -p /home/coder && \
-    chown -R $USERNAME:$USERNAME /home/coder && \
-    chown -R $USERNAME:$USERNAME ${OPENVSCODE_SERVER_ROOT}
-
-USER $USERNAME
-
-WORKDIR /home/coder/
-
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    HOME=/home/coder \
-    EDITOR=code \
-    VISUAL=code \
-    GIT_EDITOR="code --wait" \
-    OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
-
-# Default exposed port if none is specified
-EXPOSE 3000
-
-ENTRYPOINT [ "/bin/sh", "-c", "exec ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server --host 0.0.0.0 --without-connection-token \"${@}\"", "--" ]
+# ports and volumes
+EXPOSE 8443

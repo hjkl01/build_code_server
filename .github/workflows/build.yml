@@ -23,4 +23,4 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: formattedd/openvscode-server:1.95.2
+          tags: formattedd/openvscode-server:1.95.3
