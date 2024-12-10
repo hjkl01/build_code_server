@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         libldap2-dev libsasl2-dev slapd ldap-utils tox \
         lcov valgrind \
-        openssh curl tree htop ncdu zsh tmux fzf zoxide lua5.4 ripgrep lsof \
+        curl tree htop ncdu zsh tmux fzf zoxide lua5.4 ripgrep lsof \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* \
