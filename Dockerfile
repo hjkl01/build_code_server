@@ -61,7 +61,7 @@ ARG USER_GID=$USER_UID
 
 # Creating the user and usergroup
 RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME \
+    && useradd --uid $USER_UID --gid $USERNAME -m -s /usr/bin/zsh $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 

@@ -1,15 +1,14 @@
 services:
   openvscode-server:
     image: formattedd/code:latest
-    # image: openvscode:latest
     container_name: code-server
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Asia/Shanghai
     volumes:
-      - ./data/code-server:/home/coder
-    #   # - ../projects:/projects
+      - /home/coder/:/home/workspace/
+      # - ../projects:/projects
     ports:
       - 3000:3000
     restart: unless-stopped
