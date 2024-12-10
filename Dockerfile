@@ -1,62 +1,88 @@
-FROM gitpod/openvscode-server:latest
+FROM python:3.9.19-bookworm
 
-USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        make cmake\
         git \
         sudo \
 	      wget \
         libatomic1 \
         gcc \
         build-essential \
+        libldap2-dev libsasl2-dev slapd ldap-utils tox \
         lcov valgrind \
-        ncdu \
-        lsof \
-        htop \
-        tree \
-        zsh tmux fzf zoxide neovim lua5.4 ripgrep \
+        openssh curl tree htop ncdu zsh tmux fzf zoxide lua stylua5.4 ripgrep lsof \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* \
     && rm -rf /var/tmp/*
 
-# RUN wget https://ghp.ci/https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64.tar.gz -O /tmp/nvim-linux64.tar.gz && \
-RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64.tar.gz -O /tmp/nvim-linux64.tar.gz && \
+RUN wget https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz -O /tmp/nvim-linux64.tar.gz && \
     tar xzvf /tmp/nvim-linux64.tar.gz -C /opt/ && \
-    rm /tmp/nvim-linux64.tar.gz
-RUN ln -s /opt/nvim-linux64/bin/nvim  /usr/local/bin/nvim && \
-    ln -s /opt/nvim-linux64/bin/nvim  /usr/local/bin/vim && \
-    ln -s /opt/nvim-linux64/bin/nvim  /usr/local/bin/vi
+    ln -s /opt/nvim-linux64/bin/nvim /usr/local/bin/nvim
 
-RUN chown -R openvscode-server:openvscode-server -R /home/workspace
-USER openvscode-server
-
-# RUN git clone https://ghp.ci/https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.1
-RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.1
-ENV PATH=/root/.asdf/shims:/root/.asdf/bin:$PATH
-
-RUN echo ". $HOME/.asdf/asdf.sh" >> ~/.bashrc && \
-    echo ". $HOME/.asdf/completions/asdf.bash" >> ~/.bashrc
-# RUN which asdf
-RUN ~/.asdf/bin/asdf plugin add python && \
-    ~/.asdf/bin/asdf install python 3.9.19 && \
-    ~/.asdf/bin/asdf global python 3.9.19
-
-RUN RUN ln -s ~/.asdf/shims/python /usr/local/bin/python
-
-# RUN ~/.asdf/shims/python -m pip install --no-cache-dir -U pip -i https://mirrors.aliyun.com/pypi/simple/ && \
-#     ~/.asdf/shims/python -m pip install --no-cache-dir pylint black -i https://mirrors.aliyun.com/pypi/simple/
-RUN ~/.asdf/shims/python -m pip install --no-cache-dir -U pip
-    ~/.asdf/shims/python -m pip install --no-cache-dir pylint black
+RUN pip install -U pip && \
+    pip install pylint black
 
 COPY ./requirements.txt /root/requirements.txt
 COPY ./odoo_requirements.txt /root/odoo_requirements.txt
 
-# RUN ~/.asdf/shims/python -m pip install --no-cache-dir -r /root/requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
-# RUN ~/.asdf/shims/python -m pip install --no-cache-dir -r /root/odoo_requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
-RUN ~/.asdf/shims/python -m pip install --no-cache-dir -r /root/requirements.txt
-RUN ~/.asdf/shims/python -m pip install --no-cache-dir -r /root/odoo_requirements.txt
+RUN pip install -r /root/requirements.txt
+RUN pip install -r /root/odoo_requirements.txt
 
-RUN git clone https://ghp.ci/https://github.com/hjkl01/dotfiles ~/.dotfiles && \
-    cd ~/.dotfiles && cp env .env && bash ./installer.sh link && \
-    nvim --headless "+Lazy! sync" +qa
+
+WORKDIR /home/
+
+ARG RELEASE_TAG='openvscode-server-v1.95.2'
+ARG RELEASE_ORG="gitpod-io"
+ARG OPENVSCODE_SERVER_ROOT="/home/.openvscode-server"
+
+# Downloading the latest VSC Server release and extracting the release archive
+# Rename `openvscode-server` cli tool to `code` for convenience
+RUN if [ -z "${RELEASE_TAG}" ]; then \
+        echo "The RELEASE_TAG build arg must be set." >&2 && \
+        exit 1; \
+    fi && \
+    arch=$(uname -m) && \
+    if [ "${arch}" = "x86_64" ]; then \
+        arch="x64"; \
+    elif [ "${arch}" = "aarch64" ]; then \
+        arch="arm64"; \
+    elif [ "${arch}" = "armv7l" ]; then \
+        arch="armhf"; \
+    fi && \
+    wget https://github.com/${RELEASE_ORG}/openvscode-server/releases/download/${RELEASE_TAG}/${RELEASE_TAG}-linux-${arch}.tar.gz && \
+    tar -xzf ${RELEASE_TAG}-linux-${arch}.tar.gz && \
+    mv -f ${RELEASE_TAG}-linux-${arch} ${OPENVSCODE_SERVER_ROOT} && \
+    cp ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/code && \
+    rm -f ${RELEASE_TAG}-linux-${arch}.tar.gz
+
+ARG USERNAME=openvscode-server
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+# Creating the user and usergroup
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USERNAME -m -s /bin/bash $USERNAME \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+RUN chmod g+rw /home && \
+    mkdir -p /home/workspace && \
+    chown -R $USERNAME:$USERNAME /home/workspace && \
+    chown -R $USERNAME:$USERNAME ${OPENVSCODE_SERVER_ROOT}
+
+USER $USERNAME
+
+WORKDIR /home/workspace/
+
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    HOME=/home/workspace \
+    EDITOR=code \
+    VISUAL=code \
+    GIT_EDITOR="code --wait" \
+    OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
+
+# Default exposed port if none is specified
+EXPOSE 3000
+
+ENTRYPOINT [ "/bin/sh", "-c", "exec ${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server --host 0.0.0.0 --without-connection-token \"${@}\"", "--" ]
