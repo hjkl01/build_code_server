@@ -7,7 +7,7 @@ services:
       - PGID=1000
       - TZ=Asia/Shanghai
     volumes:
-      - /home/coder/:/home/workspace/
+      - ./data/code:/home/workspace/
       # - ../projects:/projects
     ports:
       - 3000:3000

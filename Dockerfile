@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /tmp/* \
     && rm -rf /var/tmp/*
 
-RUN wget https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz -O /tmp/nvim-linux64.tar.gz && \
+
+RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64.tar.gz -O /tmp/nvim-linux64.tar.gz && \
     tar xzvf /tmp/nvim-linux64.tar.gz -C /opt/ && \
     ln -s /opt/nvim-linux64/bin/nvim /usr/local/bin/nvim
 
