@@ -27,7 +27,6 @@ RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles &
     sed -i 's/execute_function InstallNeovim//g' installer.sh \
     && sed -i 's/execute_function Installasdf//g' installer.sh \
     && sed -i 's/execute_function InstallOthers//g' installer.sh \
-    && sed -i 's|||g' ~/.local/share/nvim/lazy/nvim-treesitter/lua/nvim-treesitter/parsers.lua \
     && bash ./installer.sh
 
 RUN ln -s ~/.dotfiles/nvim ~/.config/nvim
