@@ -20,6 +20,16 @@ RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64
     tar xzvf /tmp/nvim-linux64.tar.gz -C /opt/ && \
     ln -s /opt/nvim-linux64/bin/nvim /usr/local/bin/nvim
 
+RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env &&  \
+    sed -i 's/execute_function InstallNeovim//g' installer.sh \
+    && sed -i 's/execute_function Installasdf//g' installer.sh \
+    && sed -i 's/execute_function InstallOthers//g' installer.sh \
+    && bash ./installer.sh
+
+RUN ln -s ~/.dotfiles/nvim ~/.config/nvim
+RUN nvim --headless "+Lazy! sync" +qa
+RUN nvim --headless "+MasonInstallAll! sync" +qa
+
 RUN pip install -U pip && \
     pip install pylint black neovim
 
@@ -56,42 +66,14 @@ RUN if [ -z "${RELEASE_TAG}" ]; then \
     cp ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/openvscode-server ${OPENVSCODE_SERVER_ROOT}/bin/remote-cli/code && \
     rm -f ${RELEASE_TAG}-linux-${arch}.tar.gz
 
-ARG USERNAME=openvscode-server
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-
-# Creating the user and usergroup
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USERNAME -m -s /usr/bin/zsh $USERNAME \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
-
-RUN chmod g+rw /home && \
-    mkdir -p /home/workspace && \
-    chown -R $USERNAME:$USERNAME /home/workspace && \
-    chown -R $USERNAME:$USERNAME ${OPENVSCODE_SERVER_ROOT}
-
-USER $USERNAME
-
-WORKDIR /home/workspace/
+WORKDIR /root/
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    HOME=/home/workspace \
     EDITOR=code \
     VISUAL=code \
     GIT_EDITOR="code --wait" \
     OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
-
-RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env &&  \
-    sed -i 's/execute_function InstallNeovim//g' installer.sh \
-    && sed -i 's/execute_function Installasdf//g' installer.sh \
-    && sed -i 's/execute_function InstallOthers//g' installer.sh \
-    && bash ./installer.sh
-
-RUN ln -s ~/.dotfiles/nvim ~/.config/nvim
-RUN nvim --headless "+Lazy! sync" +qa
-RUN nvim --headless "+MasonInstallAll! sync" +qa
 
 # Default exposed port if none is specified
 EXPOSE 3000
