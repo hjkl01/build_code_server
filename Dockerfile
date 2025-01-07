@@ -23,16 +23,6 @@ RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64
 RUN pip install -U pip && \
     pip install pylint black neovim
 
-RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env &&  \
-    sed -i 's/execute_function InstallNeovim//g' installer.sh \
-    && sed -i 's/execute_function Installasdf//g' installer.sh \
-    && sed -i 's/execute_function InstallOthers//g' installer.sh \
-    && bash ./installer.sh
-
-RUN ln -s ~/.dotfiles/nvim ~/.config/nvim
-RUN nvim --headless "+Lazy! sync" +qa
-RUN nvim --headless "+MasonInstallAll! sync" +qa
-
 COPY ./requirements.txt /root/requirements.txt
 COPY ./odoo_requirements.txt /root/odoo_requirements.txt
 
@@ -92,6 +82,16 @@ ENV LANG=C.UTF-8 \
     VISUAL=code \
     GIT_EDITOR="code --wait" \
     OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
+
+RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env &&  \
+    sed -i 's/execute_function InstallNeovim//g' installer.sh \
+    && sed -i 's/execute_function Installasdf//g' installer.sh \
+    && sed -i 's/execute_function InstallOthers//g' installer.sh \
+    && bash ./installer.sh
+
+RUN ln -s ~/.dotfiles/nvim ~/.config/nvim
+RUN nvim --headless "+Lazy! sync" +qa
+RUN nvim --headless "+MasonInstallAll! sync" +qa
 
 # Default exposed port if none is specified
 EXPOSE 3000
