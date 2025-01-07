@@ -23,9 +23,16 @@ RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64
 RUN pip install -U pip && \
     pip install pylint black neovim
 
-RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env && bash ./installer.sh link
+RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env &&  \
+    sed -i 's/execute_function InstallNeovim//g' installer.sh \
+    && sed -i 's/execute_function Installasdf//g' installer.sh \
+    && sed -i 's/execute_function InstallOthers//g' installer.sh \
+    && sed -i 's|||g' ~/.local/share/nvim/lazy/nvim-treesitter/lua/nvim-treesitter/parsers.lua \
+    && bash ./installer.sh
+
+RUN ln -s ~/.dotfiles/nvim ~/.config/nvim
 RUN nvim --headless "+Lazy! sync" +qa
-RUN nvim --headless "MasonInstallAll+! sync" +qa
+RUN nvim --headless "+MasonInstallAll! sync" +qa
 
 COPY ./requirements.txt /root/requirements.txt
 COPY ./odoo_requirements.txt /root/odoo_requirements.txt
