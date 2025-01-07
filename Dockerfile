@@ -21,7 +21,11 @@ RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64
     ln -s /opt/nvim-linux64/bin/nvim /usr/local/bin/nvim
 
 RUN pip install -U pip && \
-    pip install pylint black
+    pip install pylint black neovim
+
+RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env && bash ./installer.sh link
+RUN nvim --headless "+Lazy! sync" +qa
+RUN nvim --headless "MasonInstallAll+! sync" +qa
 
 COPY ./requirements.txt /root/requirements.txt
 COPY ./odoo_requirements.txt /root/odoo_requirements.txt
