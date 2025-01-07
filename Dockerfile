@@ -23,11 +23,11 @@ RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64
 RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env &&  \
     sed -i 's/execute_function InstallNeovim//g' installer.sh \
     && sed -i 's/execute_function Installasdf//g' installer.sh \
-    && sed -i 's/execute_function InstallOthers//g' installer.sh \
     && bash ./installer.sh
 
 RUN ln -s ~/.dotfiles/nvim ~/.config/nvim
 RUN nvim --headless "+Lazy! sync" +qa
+RUN nvim --headless "+Mason! sync" +qa
 RUN nvim --headless "+MasonInstallAll! sync" +qa
 
 RUN pip install -U pip && \
@@ -74,6 +74,12 @@ ENV LANG=C.UTF-8 \
     VISUAL=code \
     GIT_EDITOR="code --wait" \
     OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
+
+RUN code --install-extension ms-python.python
+RUN code --install-extension esbenp.prettier-vscode
+RUN code --install-extension eamodio.gitlens
+RUN code --install-extension asvetliakov.vscode-neovim
+RUN code --install-extension llam4u.nerdtree
 
 # Default exposed port if none is specified
 EXPOSE 3000
