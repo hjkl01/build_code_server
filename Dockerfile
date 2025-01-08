@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	      wget \
         libatomic1 \
         gcc \
-        nodejs \
+        fonts-firacode/stable \
         build-essential \
         libldap2-dev libsasl2-dev slapd ldap-utils tox \
         lcov valgrind \
@@ -16,20 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /tmp/* \
     && rm -rf /var/tmp/*
 
-
-RUN wget https://github.com/neovim/neovim/releases/download/v0.10.2/nvim-linux64.tar.gz -O /tmp/nvim-linux64.tar.gz && \
-    tar xzvf /tmp/nvim-linux64.tar.gz -C /opt/ && \
-    ln -s /opt/nvim-linux64/bin/nvim /usr/local/bin/nvim
-
-RUN git clone https://github.com/hjkl01/dotfiles ~/.dotfiles && cd ~/.dotfiles && cp env .env &&  \
-    sed -i 's/execute_function InstallNeovim//g' installer.sh \
-    && sed -i 's/execute_function Installasdf//g' installer.sh \
-    && bash ./installer.sh
-
-RUN ln -s ~/.dotfiles/nvim ~/.config/nvim
-RUN nvim --headless "+Lazy! sync" +qa
-RUN nvim --headless "+Mason! sync" +qa
-RUN nvim --headless "+MasonInstallAll! sync" +qa
 
 RUN pip install -U pip && \
     pip install pylint black neovim
@@ -81,6 +67,7 @@ RUN /home/.openvscode-server/bin/remote-cli/code --install-extension esbenp.pret
 RUN /home/.openvscode-server/bin/remote-cli/code --install-extension eamodio.gitlens
 RUN /home/.openvscode-server/bin/remote-cli/code --install-extension asvetliakov.vscode-neovim
 RUN /home/.openvscode-server/bin/remote-cli/code --install-extension llam4u.nerdtree
+RUN /home/.openvscode-server/bin/remote-cli/code --install-extension PKief.material-icon-theme
 
 # Default exposed port if none is specified
 EXPOSE 3000
