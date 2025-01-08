@@ -75,11 +75,11 @@ ENV LANG=C.UTF-8 \
     GIT_EDITOR="code --wait" \
     OPENVSCODE_SERVER_ROOT=${OPENVSCODE_SERVER_ROOT}
 
-RUN code --install-extension ms-python.python
-RUN code --install-extension esbenp.prettier-vscode
-RUN code --install-extension eamodio.gitlens
-RUN code --install-extension asvetliakov.vscode-neovim
-RUN code --install-extension llam4u.nerdtree
+RUN /home/.openvscode-server/bin/remote-cli/code --install-extension ms-python.python
+RUN /home/.openvscode-server/bin/remote-cli/code --install-extension esbenp.prettier-vscode
+RUN /home/.openvscode-server/bin/remote-cli/code --install-extension eamodio.gitlens
+RUN /home/.openvscode-server/bin/remote-cli/code --install-extension asvetliakov.vscode-neovim
+RUN /home/.openvscode-server/bin/remote-cli/code --install-extension llam4u.nerdtree
 
 # Default exposed port if none is specified
 EXPOSE 3000
