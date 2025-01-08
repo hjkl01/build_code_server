@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	      wget \
         libatomic1 \
         gcc \
+        nodejs \
         build-essential \
         libldap2-dev libsasl2-dev slapd ldap-utils tox \
         lcov valgrind \
